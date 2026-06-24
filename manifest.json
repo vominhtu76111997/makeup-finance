@@ -1,0 +1,18 @@
+{
+  "name": "Makeup Studio — Quản lý thu nhập",
+  "short_name": "Makeup",
+  "description": "Quản lý nghề makeup — vốn học, mỹ phẩm, khách hàng, doanh thu, hồi vốn",
+  "lang": "vi",
+  "dir": "ltr",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1013",
+  "theme_color": "#1a1013",
+  "categories": ["business", "productivity", "lifestyle"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

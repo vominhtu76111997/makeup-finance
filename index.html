@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Makeup">
+<meta name="theme-color" content="#1a1013">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23fb7185'/><stop offset='1' stop-color='%23f0abfc'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%231a1013'/><rect x='40' y='46' width='20' height='34' rx='3' fill='url(%23g)'/><rect x='38' y='42' width='24' height='6' rx='3' fill='%23fff' opacity='0.85'/><path d='M42 42 L42 30 Q42 22 50 18 Q58 22 58 30 L58 42 Z' fill='url(%23g)'/></svg>">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<title>Makeup Studio</title>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body data-theme="rose">
+
+<div id="appSplash">
+  <svg class="sp-logo" viewBox="0 0 100 100" width="74" height="74" aria-hidden="true">
+    <defs><linearGradient id="spGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb7185"/><stop offset="1" stop-color="#f0abfc"/></linearGradient></defs>
+    <rect x="40" y="46" width="20" height="34" rx="3" fill="url(#spGrad)"/>
+    <rect x="38" y="42" width="24" height="6" rx="3" fill="#fff" opacity="0.85"/>
+    <path d="M42 42 L42 30 Q42 22 50 18 Q58 22 58 30 L58 42 Z" fill="url(#spGrad)"/>
+  </svg>
+  <div class="sp-ring"></div>
+  <div class="sp-msg" id="splashMsg">Đang tải dữ liệu…</div>
+</div>
+<script>/* failsafe: không bao giờ kẹt ở splash dù script lỗi */setTimeout(function(){var s=document.getElementById('appSplash');if(s){s.style.opacity='0';setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},450);}},12000);</script>
+
+<div id="fbLogin"><div class="fb-box">
+  <div style="font-size:36px;text-align:center;margin-bottom:6px;">💄</div>
+  <h2>Makeup Studio</h2>
+  <div class="fb-sub" id="fbSub">Đăng nhập để đồng bộ giữa điện thoại & máy tính</div>
+  <div class="fb-seg" id="fbSeg">
+    <button type="button" class="on" data-mode="login" onclick="setAuthMode('login')">Đăng nhập</button>
+    <button type="button" data-mode="signup" onclick="setAuthMode('signup')">Đăng ký</button>
+  </div>
+  <form onsubmit="fbSubmitAuth(event)">
+    <input id="fbName" type="text" placeholder="Tên hiển thị (tuỳ chọn)" autocomplete="name" style="display:none;">
+    <input id="fbEmail" type="email" placeholder="Email" autocomplete="username" inputmode="email">
+    <input id="fbPass" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button type="submit" class="fb-go" id="fbGoBtn">Đăng nhập</button>
+  </form>
+  <div class="fb-err" id="fbLoginErr"></div>
+  <span class="fb-forgot" id="fbForgot" onclick="fbForgotPassword()">Quên mật khẩu?</span>
+  <span class="fb-skip" onclick="fbSkip()">Dùng offline (không đồng bộ)</span>
+</div></div>
+
+<div class="video-bg"><canvas id="bgCanvas"></canvas></div>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="logo"><div class="logo-title">💄 Makeup Studio</div><div class="logo-sub" id="sidebarDate"></div></div>
+  <div class="nav-section">Menu</div>
+  <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')"><span class="nav-emoji">📊</span><span>Tổng quan</span></div>
+  <div class="nav-item" data-page="clients" onclick="showPage('clients')"><span class="nav-emoji">💋</span><span>Khách hàng</span></div>
+  <div class="nav-item" data-page="capital" onclick="showPage('capital')"><span class="nav-emoji">🎓</span><span>Vốn đầu tư</span></div>
+  <div class="nav-item" data-page="stats" onclick="showPage('stats')"><span class="nav-emoji">📈</span><span>Thống kê</span></div>
+  <div class="nav-item" data-page="settings" onclick="showPage('settings')"><span class="nav-emoji">⚙️</span><span>Cài đặt</span></div>
+  <div class="sidebar-bottom"><div class="who" id="whoBox">Chế độ offline</div></div>
+</nav>
+
+<nav class="glass-nav" id="glassNav" aria-label="Điều hướng">
+  <div class="gn-pill" id="gnPill"></div>
+  <button class="gn-item active" data-page="dashboard" aria-label="Tổng quan"><span>📊</span></button>
+  <button class="gn-item" data-page="clients" aria-label="Khách hàng"><span>💋</span></button>
+  <button class="gn-item" data-page="capital" aria-label="Vốn"><span>🎓</span></button>
+  <button class="gn-item" data-page="stats" aria-label="Thống kê"><span>📈</span></button>
+  <button class="gn-item" data-page="settings" aria-label="Cài đặt"><span>⚙️</span></button>
+</nav>
+
+<main class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div id="page-dashboard" class="page active">
+  <div class="topbar"><div class="topbar-left"><h1>📊 Tổng quan</h1><div class="sub" id="dashDate"></div></div></div>
+
+  <div class="metrics" id="dashMetrics"></div>
+
+  <!-- BREAK-EVEN HERO -->
+  <div class="be-card" id="beCard"></div>
+
+  <!-- QUICK ADD CLIENT -->
+  <div class="card">
+    <div class="card-title accent">💋 Thêm khách nhanh</div>
+    <div class="chip-row" id="quickServiceRow"></div>
+    <div class="row2">
+      <div class="field"><label>Tên khách</label><input type="text" id="qcName" placeholder="VD: Chị Lan, Cô dâu Hoa..."/></div>
+      <div class="field"><label>Dịch vụ</label><select id="qcService"></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Doanh thu (nhập 500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="qcRevenue" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'qcRevenueP')" onkeydown="if(event.key==='Enter')addClient()"/><span class="smart-preview" id="qcRevenueP"></span></div></div>
+      <div class="field"><label>Chi phí mỹ phẩm buổi này (tuỳ chọn)</label><div class="smart-wrap"><input type="number" id="qcCost" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'qcCostP')"/><span class="smart-preview" id="qcCostP"></span></div></div>
+    </div>
+    <button class="btn-full" onclick="addClient()">+ Thêm khách hàng</button>
+  </div>
+
+  <!-- RECENT CLIENTS -->
+  <div class="card">
+    <div class="card-title">🕘 Khách gần đây</div>
+    <div id="recentClients" class="list-scroll"></div>
+  </div>
+</div>
+
+<!-- ══ CLIENTS ══ -->
+<div id="page-clients" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>💋 Khách hàng</h1><div class="sub" id="clientsSub">Toàn bộ khách đã làm</div></div></div>
+
+  <div class="card">
+    <div class="card-title accent">+ Thêm khách hàng</div>
+    <div class="chip-row" id="cServiceRow"></div>
+    <div class="row2">
+      <div class="field"><label>Tên khách</label><input type="text" id="cName" placeholder="Tên khách..."/></div>
+      <div class="field"><label>Dịch vụ</label><select id="cService"></select></div>
+    </div>
+    <div class="row3">
+      <div class="field"><label>Doanh thu (500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="cRevenue" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cRevenueP')"/><span class="smart-preview" id="cRevenueP"></span></div></div>
+      <div class="field"><label>Chi phí mỹ phẩm (tuỳ chọn)</label><div class="smart-wrap"><input type="number" id="cCost" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cCostP')"/><span class="smart-preview" id="cCostP"></span></div></div>
+      <div class="field"><label>Ngày</label><input type="date" id="cDate"/></div>
+    </div>
+    <div class="field"><label>Ghi chú (tuỳ chọn)</label><input type="text" id="cNote" placeholder="VD: makeup cô dâu + làm tóc..."/></div>
+    <button class="btn-full" onclick="addClientFull()">+ Thêm khách hàng</button>
+  </div>
+
+  <div class="filter-row">
+    <span class="filter-search"><input type="search" id="cFilterText" placeholder="Tìm tên khách / ghi chú…" oninput="renderClients()"/></span>
+    <select id="cFilterService" onchange="renderClients()"></select>
+    <input type="month" id="cFilterMonth" onchange="renderClients()"/>
+  </div>
+
+  <div class="card"><div id="clientsList" class="list-scroll"></div></div>
+</div>
+
+<!-- ══ CAPITAL ══ -->
+<div id="page-capital" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>🎓 Vốn đầu tư</h1><div class="sub">Tiền đã học & tiền mua mỹ phẩm</div></div></div>
+
+  <div class="metrics" id="capMetrics"></div>
+
+  <!-- COURSES -->
+  <div class="card">
+    <div class="card-title accent">🎓 Tiền đã học (khoá học)</div>
+    <div class="total-row"><span class="l">Tổng học phí</span><span class="v blurable" id="totalCourses">₫0</span></div>
+    <div class="row3">
+      <div class="field"><label>Tên khoá học</label><input type="text" id="courseName" placeholder="VD: Khoá makeup cơ bản..."/></div>
+      <div class="field"><label>Học phí (5000 = 5.000.000₫)</label><div class="smart-wrap"><input type="number" id="courseAmt" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'courseAmtP')"/><span class="smart-preview" id="courseAmtP"></span></div></div>
+      <div class="field"><label>Ngày</label><input type="date" id="courseDate"/></div>
+    </div>
+    <button class="btn-full" onclick="addCourse()">+ Thêm khoá học</button>
+    <div id="coursesList" class="list-scroll" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- COSMETICS -->
+  <div class="card">
+    <div class="card-title accent2">💅 Tiền mua mỹ phẩm</div>
+    <div class="total-row"><span class="l">Tổng mỹ phẩm</span><span class="v blurable" id="totalCosmetics" style="color:var(--accent2)">₫0</span></div>
+    <div class="row3">
+      <div class="field"><label>Tên sản phẩm</label><input type="text" id="cosName" placeholder="VD: Cushion, Son, Cọ..."/></div>
+      <div class="field"><label>Giá tiền (500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="cosAmt" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cosAmtP')"/><span class="smart-preview" id="cosAmtP"></span></div></div>
+      <div class="field"><label>Ngày</label><input type="date" id="cosDate"/></div>
+    </div>
+    <button class="btn-full" onclick="addCosmetic()">+ Thêm mỹ phẩm</button>
+    <div id="cosmeticsList" class="list-scroll" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- ══ STATS ══ -->
+<div id="page-stats" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>📈 Thống kê</h1><div class="sub" id="statsSub"></div></div></div>
+  <div class="be-card" id="statsBeCard"></div>
+  <div class="stats-grid">
+    <div class="card"><div class="card-title">💰 Doanh thu 6 tháng</div><div class="chart-wrap"><canvas id="revChart"></canvas></div></div>
+    <div class="card"><div class="card-title">💋 Doanh thu theo dịch vụ</div><div class="chart-wrap"><canvas id="serviceChart"></canvas></div></div>
+  </div>
+  <div class="card"><div class="card-title">🏆 Dịch vụ phổ biến</div><div id="serviceBreakdown"></div></div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div id="page-settings" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>⚙️ Cài đặt</h1><div class="sub">Tuỳ chỉnh app</div></div></div>
+
+  <div class="settings-section"><h2>Giao diện</h2>
+    <div class="theme-row" id="themeRow"></div>
+    <div class="toggle-row"><span>🔊 Âm thanh khi thao tác</span><button class="toggle" id="soundToggle" onclick="toggleSound()"></button></div>
+    <div class="toggle-row"><span>🙈 Ẩn số tiền (riêng tư)</span><button class="toggle" id="privacyToggle" onclick="togglePrivacy()"></button></div>
+  </div>
+
+  <div class="settings-section"><h2>Loại dịch vụ</h2>
+    <div class="cat-list" id="serviceTags"></div>
+    <div class="add-cat-row"><input type="text" id="newService" placeholder="VD: Makeup cô dâu, Dự tiệc..." onkeydown="if(event.key==='Enter')addService()"/><button class="btn btn-accent" onclick="addService()">+ Thêm</button></div>
+  </div>
+
+  <div class="settings-section"><h2>Đồng bộ đám mây</h2>
+    <div class="card"><div class="sync-status" id="syncStatus">Đang khởi tạo…</div></div>
+  </div>
+
+  <div class="settings-section"><h2>Dữ liệu</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="exportJSON()">↓ Sao lưu (backup)</button>
+      <button class="btn" onclick="document.getElementById('importFile').click()">↑ Khôi phục</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)"/>
+    </div>
+  </div>
+
+  <div class="settings-section"><h2>Cài lên điện thoại</h2>
+    <div class="card" style="font-size:12px;color:var(--text2);line-height:1.7;">iPhone: Safari → nút Chia sẻ → <b>Thêm vào MH chính</b> → Thêm.<br>Android: Chrome → menu ⋮ → <b>Cài đặt ứng dụng</b>.</div>
+  </div>
+
+  <div class="settings-section"><h2>Vùng nguy hiểm</h2>
+    <div class="danger-zone"><p>Xoá toàn bộ dữ liệu trên thiết bị này. Không hoàn tác.</p><button class="btn btn-red" onclick="clearAllData()">Xoá tất cả dữ liệu</button></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div class="fab-stack">
+  <button class="fab" onclick="showPage('clients')" title="Thêm khách" aria-label="Thêm khách">＋</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- EDIT CLIENT modal -->
+<div class="overlay" id="editOverlay" onclick="if(event.target===this)closeEdit()">
+  <div class="modal">
+    <h3>✏️ Sửa khách hàng</h3>
+    <div class="field"><label>Tên khách</label><input type="text" id="eName"/></div>
+    <div class="field"><label>Dịch vụ</label><select id="eService"></select></div>
+    <div class="row2">
+      <div class="field"><label>Doanh thu (500 = 500.000₫)</label><input type="number" id="eRevenue" inputmode="numeric"/></div>
+      <div class="field"><label>Chi phí mỹ phẩm</label><input type="number" id="eCost" inputmode="numeric"/></div>
+    </div>
+    <div class="field"><label>Ngày</label><input type="date" id="eDate"/></div>
+    <div class="field"><label>Ghi chú</label><input type="text" id="eNote"/></div>
+    <div class="modal-actions">
+      <button class="modal-del" onclick="deleteEditClient()" title="Xoá">🗑</button>
+      <button class="btn-full" onclick="saveEdit()">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="./app.js"></script>
+</body></html>
