@@ -73,14 +73,15 @@ function showPage(p){
   if(p==='settings')renderSettings();
   window.scrollTo({top:0,behavior:'smooth'});
 }
-/* mobile glass-nav pill */
+/* mobile glass-nav pill — dùng offsetLeft/Width (nav position:fixed nên offsetParent=null) */
 function gnSync(instant){
-  const nav=$('glassNav');if(!nav||nav.offsetParent===null)return;
+  const nav=$('glassNav');if(!nav)return;
+  if(nav.getBoundingClientRect().width===0)return;       // ẩn ở desktop
   const active=nav.querySelector('.gn-item.active');const pill=$('gnPill');if(!active||!pill)return;
-  const r=active.getBoundingClientRect(),nr=nav.getBoundingClientRect();
-  pill.style.width=r.width+'px';
-  pill.style.transform='translateX('+(r.left-nr.left-6)+'px)';
-  if(instant){pill.style.transition='none';requestAnimationFrame(()=>{pill.style.transition='';});}
+  if(instant)pill.style.transition='none';
+  pill.style.width=active.offsetWidth+'px';
+  pill.style.transform='translateX('+active.offsetLeft+'px)';
+  if(instant)requestAnimationFrame(()=>{pill.style.transition='';});
 }
 document.querySelectorAll('.gn-item').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 window.addEventListener('resize',()=>gnSync(true));
@@ -327,8 +328,13 @@ function renderSettings(){
 }
 function setTheme(t){theme=t;document.body.setAttribute('data-theme',t);localStorage.setItem('mk_theme',t);const m=document.querySelector('meta[name=theme-color]');const td=THEMES.find(x=>x.id===t);if(m&&td)m.setAttribute('content',td.bg);renderSettings();}
 function toggleSound(){soundOn=!soundOn;localStorage.setItem('mk_sound',soundOn);$('soundToggle').className='toggle'+(soundOn?' on':'');if(soundOn)playClick();}
-function togglePrivacy(){privacyOn=!privacyOn;localStorage.setItem('mk_privacy',privacyOn?'1':'0');const t=$('privacyToggle');if(t)t.className='toggle'+(privacyOn?' on':'');applyPrivacy();}
-function applyPrivacy(){document.body.classList.toggle('privacy',privacyOn);}
+const _EYE_OPEN='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const _EYE_OFF='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+function togglePrivacy(){playClick();privacyOn=!privacyOn;localStorage.setItem('mk_privacy',privacyOn?'1':'0');const t=$('privacyToggle');if(t)t.className='toggle'+(privacyOn?' on':'');applyPrivacy();showToast(privacyOn?'Đã ẩn số tiền 🙈':'Đã hiện số tiền');}
+function applyPrivacy(){
+  document.body.classList.toggle('privacy',privacyOn);
+  const f=$('privacyFab');if(f){f.innerHTML=privacyOn?_EYE_OFF:_EYE_OPEN;f.classList.toggle('fab-on',privacyOn);}
+}
 
 /* ════════ EDIT CLIENT MODAL ════════ */
 let editId=null;
@@ -618,8 +624,79 @@ function init(){
   start();
 })();
 
-/* keyboard: Esc đóng modal */
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEdit();});
+/* ════════════════════════════════════════════
+   MÁY TÍNH (FAB + Ctrl/Cmd+K) — chèn nhanh Doanh thu / Vốn
+════════════════════════════════════════════ */
+let _calcExpr='',_calcJustEq=false;
+function toggleCalc(){const o=$('calcOverlay');if(o.classList.contains('show'))closeCalc();else openCalc();}
+function openCalc(){
+  playClick();
+  const rev=totalRevenue(),cap=totalCapital();
+  const rv=$('calcRevVal'),cv=$('calcCapVal');
+  if(rv){rv.textContent=fmt(rev);$('calcRev').dataset.v=Math.round(rev);}
+  if(cv){cv.textContent=fmt(cap);$('calcCap').dataset.v=Math.round(cap);}
+  $('calcOverlay').classList.add('show');calcRender();
+}
+function closeCalc(){$('calcOverlay').classList.remove('show');}
+function calcInsertVal(v){
+  if(v===undefined||v==='')return;playClick();
+  if(_calcJustEq){_calcExpr='';_calcJustEq=false;}
+  if(_calcExpr&&/[0-9.)]$/.test(_calcExpr)){showToast('Thêm phép tính (+−×÷) trước đã',false);return;}
+  _calcExpr+=String(v);calcRender();
+}
+function calcSanitize(s){return s.replace(/[^0-9+\-*/.%()]/g,'');}
+function calcEval(expr){
+  const s=calcSanitize(expr);if(!s)return null;
+  const conv=s.replace(/(\d+\.?\d*)%/g,'($1/100)');
+  if(/[+\-*/.(]$/.test(conv))return null;
+  try{const v=Function('"use strict";return('+conv+')')();if(typeof v!=='number'||!isFinite(v))return null;return v;}catch(e){return null;}
+}
+function calcFmtNum(v){if(v===null||v===undefined)return '';const r=Math.round(v*100)/100;return r.toLocaleString('vi-VN',{maximumFractionDigits:2});}
+function calcRender(final){
+  const exprEl=$('calcExpr'),outEl=$('calcOut');if(!exprEl||!outEl)return;
+  const disp=_calcExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−');
+  if(final!==undefined&&final!==null){exprEl.textContent=disp+' =';outEl.textContent=calcFmtNum(final);outEl.className='calc-out';return;}
+  exprEl.textContent='';
+  if(!_calcExpr){outEl.textContent='0';outEl.className='calc-out';return;}
+  outEl.textContent=disp;outEl.className='calc-out';
+  const preview=calcEval(_calcExpr);
+  if(preview!==null&&!/^[0-9.]+$/.test(_calcExpr)){exprEl.textContent=disp;outEl.textContent='= '+calcFmtNum(preview);outEl.className='calc-out preview';}
+}
+function calcKey(k){
+  playClick();
+  if(k==='C'){_calcExpr='';_calcJustEq=false;calcRender();return;}
+  if(k==='back'){_calcExpr=_calcExpr.slice(0,-1);_calcJustEq=false;calcRender();return;}
+  if(k==='='){const v=calcEval(_calcExpr);if(v===null){showToast('Biểu thức không hợp lệ',false);return;}calcRender(v);_calcExpr=String(Math.round(v*100)/100);_calcJustEq=true;return;}
+  if(_calcJustEq){if(/[0-9.]/.test(k)&&k!=='000')_calcExpr='';_calcJustEq=false;}
+  if(k==='000'){if(!_calcExpr||/[+\-*/(%]$/.test(_calcExpr))return;_calcExpr+='000';calcRender();return;}
+  if(/[+*/%]/.test(k)&&(/[+\-*/.%]$/.test(_calcExpr)||!_calcExpr))return;
+  if(k==='-'&&/[+\-.%]$/.test(_calcExpr))return;
+  if(k==='.'){const seg=_calcExpr.split(/[+\-*/%()]/).pop();if(seg.includes('.'))return;}
+  _calcExpr+=k;calcRender();
+}
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();toggleCalc();return;}
+  const calcOpen=$('calcOverlay').classList.contains('show');
+  if(calcOpen){
+    if(e.key==='Escape'){e.preventDefault();closeCalc();return;}
+    const tag=(document.activeElement&&document.activeElement.tagName)||'';
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+    if(/^[0-9]$/.test(e.key)){e.preventDefault();calcKey(e.key);return;}
+    if(['+','-','*','/','%'].includes(e.key)){e.preventDefault();calcKey(e.key);return;}
+    if(e.key==='('||e.key===')'){e.preventDefault();_calcExpr+=e.key;calcRender();return;}
+    if(e.key==='.'){e.preventDefault();calcKey('.');return;}
+    if(e.key==='Enter'||e.key==='='){e.preventDefault();calcKey('=');return;}
+    if(e.key==='Backspace'){e.preventDefault();calcKey('back');return;}
+    if(e.key.toLowerCase()==='c'){e.preventDefault();calcKey('C');return;}
+    return;
+  }
+  if(e.key==='Escape'){closeEdit();return;}
+  const tag=(document.activeElement&&document.activeElement.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+  if(e.key.toLowerCase()==='h'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){togglePrivacy();}
+});
 
 /* ── SERVICE WORKER ── */
 if('serviceWorker' in navigator){

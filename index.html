@@ -91,8 +91,8 @@
       <div class="field"><label>Dịch vụ</label><select id="qcService"></select></div>
     </div>
     <div class="row2">
-      <div class="field"><label>Doanh thu (nhập 500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="qcRevenue" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'qcRevenueP')" onkeydown="if(event.key==='Enter')addClient()"/><span class="smart-preview" id="qcRevenueP"></span></div></div>
-      <div class="field"><label>Chi phí mỹ phẩm buổi này (tuỳ chọn)</label><div class="smart-wrap"><input type="number" id="qcCost" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'qcCostP')"/><span class="smart-preview" id="qcCostP"></span></div></div>
+      <div class="field field-thu"><label>Doanh thu (nhập 500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="qcRevenue" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'qcRevenueP')" onkeydown="if(event.key==='Enter')addClient()"/><span class="smart-preview" id="qcRevenueP"></span></div></div>
+      <div class="field field-chi"><label>Chi phí mỹ phẩm buổi này (tuỳ chọn)</label><div class="smart-wrap"><input type="number" id="qcCost" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'qcCostP')"/><span class="smart-preview" id="qcCostP"></span></div></div>
     </div>
     <button class="btn-full" onclick="addClient()">+ Thêm khách hàng</button>
   </div>
@@ -116,8 +116,8 @@
       <div class="field"><label>Dịch vụ</label><select id="cService"></select></div>
     </div>
     <div class="row3">
-      <div class="field"><label>Doanh thu (500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="cRevenue" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cRevenueP')"/><span class="smart-preview" id="cRevenueP"></span></div></div>
-      <div class="field"><label>Chi phí mỹ phẩm (tuỳ chọn)</label><div class="smart-wrap"><input type="number" id="cCost" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cCostP')"/><span class="smart-preview" id="cCostP"></span></div></div>
+      <div class="field field-thu"><label>Doanh thu (500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="cRevenue" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cRevenueP')"/><span class="smart-preview" id="cRevenueP"></span></div></div>
+      <div class="field field-chi"><label>Chi phí mỹ phẩm (tuỳ chọn)</label><div class="smart-wrap"><input type="number" id="cCost" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cCostP')"/><span class="smart-preview" id="cCostP"></span></div></div>
       <div class="field"><label>Ngày</label><input type="date" id="cDate"/></div>
     </div>
     <div class="field"><label>Ghi chú (tuỳ chọn)</label><input type="text" id="cNote" placeholder="VD: makeup cô dâu + làm tóc..."/></div>
@@ -145,7 +145,7 @@
     <div class="total-row"><span class="l">Tổng học phí</span><span class="v blurable" id="totalCourses">₫0</span></div>
     <div class="row3">
       <div class="field"><label>Tên khoá học</label><input type="text" id="courseName" placeholder="VD: Khoá makeup cơ bản..."/></div>
-      <div class="field"><label>Học phí (5000 = 5.000.000₫)</label><div class="smart-wrap"><input type="number" id="courseAmt" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'courseAmtP')"/><span class="smart-preview" id="courseAmtP"></span></div></div>
+      <div class="field field-chi"><label>Học phí (5000 = 5.000.000₫)</label><div class="smart-wrap"><input type="number" id="courseAmt" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'courseAmtP')"/><span class="smart-preview" id="courseAmtP"></span></div></div>
       <div class="field"><label>Ngày</label><input type="date" id="courseDate"/></div>
     </div>
     <button class="btn-full" onclick="addCourse()">+ Thêm khoá học</button>
@@ -158,7 +158,7 @@
     <div class="total-row"><span class="l">Tổng mỹ phẩm</span><span class="v blurable" id="totalCosmetics" style="color:var(--accent2)">₫0</span></div>
     <div class="row3">
       <div class="field"><label>Tên sản phẩm</label><input type="text" id="cosName" placeholder="VD: Cushion, Son, Cọ..."/></div>
-      <div class="field"><label>Giá tiền (500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="cosAmt" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cosAmtP')"/><span class="smart-preview" id="cosAmtP"></span></div></div>
+      <div class="field field-chi"><label>Giá tiền (500 = 500.000₫)</label><div class="smart-wrap"><input type="number" id="cosAmt" placeholder="0" step="any" min="0" inputmode="numeric" oninput="smartPreview(this,'cosAmtP')"/><span class="smart-preview" id="cosAmtP"></span></div></div>
       <div class="field"><label>Ngày</label><input type="date" id="cosDate"/></div>
     </div>
     <button class="btn-full" onclick="addCosmetic()">+ Thêm mỹ phẩm</button>
@@ -217,7 +217,51 @@
 </div>
 
 <div class="fab-stack">
+  <button class="fab" id="privacyFab" onclick="togglePrivacy()" title="Ẩn/hiện số tiền (phím H)" aria-label="Ẩn/hiện số tiền"></button>
+  <button class="fab fab-main" onclick="toggleCalc()" title="Máy tính (Ctrl+K)" aria-label="Máy tính"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="8.5" y1="6" x2="15.5" y2="6"/><line x1="8.5" y1="11" x2="8.5" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="15.5" y1="11" x2="15.5" y2="11.01"/><line x1="8.5" y1="15" x2="8.5" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="15.5" y1="15" x2="15.5" y2="15.01"/><line x1="8.5" y1="18.5" x2="12" y2="18.5"/></svg></button>
   <button class="fab" onclick="showPage('clients')" title="Thêm khách" aria-label="Thêm khách">＋</button>
+</div>
+
+<!-- CALCULATOR modal -->
+<div class="calc-overlay" id="calcOverlay" onclick="if(event.target===this)closeCalc()">
+  <div class="calc-box">
+    <div class="calc-head"><span class="ttl">🧮 MÁY TÍNH</span><button class="calc-close" onclick="closeCalc()" title="Đóng (Esc)">✕</button></div>
+    <div class="calc-info">
+      <div class="calc-info-chip" id="calcRev" onclick="calcInsertVal(this.dataset.v)" title="Nhấn để chèn số vào phép tính">
+        <span class="ci-lbl">💰 Tổng doanh thu</span><span class="ci-val blurable" id="calcRevVal">—</span>
+      </div>
+      <div class="calc-info-chip" id="calcCap" onclick="calcInsertVal(this.dataset.v)" title="Nhấn để chèn số vào phép tính">
+        <span class="ci-lbl">🎓 Tổng vốn</span><span class="ci-val blurable" id="calcCapVal">—</span>
+      </div>
+    </div>
+    <div class="calc-screen">
+      <div class="calc-expr" id="calcExpr"></div>
+      <div class="calc-out" id="calcOut">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="calc-btn fn" onclick="calcKey('C')">C</button>
+      <button class="calc-btn fn" onclick="calcKey('back')">⌫</button>
+      <button class="calc-btn op" onclick="calcKey('%')">%</button>
+      <button class="calc-btn op" onclick="calcKey('/')">÷</button>
+      <button class="calc-btn" onclick="calcKey('7')">7</button>
+      <button class="calc-btn" onclick="calcKey('8')">8</button>
+      <button class="calc-btn" onclick="calcKey('9')">9</button>
+      <button class="calc-btn op" onclick="calcKey('*')">×</button>
+      <button class="calc-btn" onclick="calcKey('4')">4</button>
+      <button class="calc-btn" onclick="calcKey('5')">5</button>
+      <button class="calc-btn" onclick="calcKey('6')">6</button>
+      <button class="calc-btn op" onclick="calcKey('-')">−</button>
+      <button class="calc-btn" onclick="calcKey('1')">1</button>
+      <button class="calc-btn" onclick="calcKey('2')">2</button>
+      <button class="calc-btn" onclick="calcKey('3')">3</button>
+      <button class="calc-btn op" onclick="calcKey('+')">+</button>
+      <button class="calc-btn" onclick="calcKey('000')">000</button>
+      <button class="calc-btn" onclick="calcKey('0')">0</button>
+      <button class="calc-btn" onclick="calcKey('.')">.</button>
+      <button class="calc-btn eq" onclick="calcKey('=')">=</button>
+    </div>
+    <div class="calc-hint">Ctrl+K mở/đóng · Enter = kết quả · Esc đóng · gõ trực tiếp từ bàn phím · nhấn chip để chèn số</div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
