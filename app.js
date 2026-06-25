@@ -73,18 +73,71 @@ function showPage(p){
   if(p==='settings')renderSettings();
   window.scrollTo({top:0,behavior:'smooth'});
 }
-/* mobile glass-nav pill — dùng offsetLeft/Width (nav position:fixed nên offsetParent=null) */
-function gnSync(instant){
-  const nav=$('glassNav');if(!nav)return;
-  if(nav.getBoundingClientRect().width===0)return;       // ẩn ở desktop
-  const active=nav.querySelector('.gn-item.active');const pill=$('gnPill');if(!active||!pill)return;
-  if(instant)pill.style.transition='none';
-  pill.style.width=active.offsetWidth+'px';
-  pill.style.transform='translateX('+active.offsetLeft+'px)';
-  if(instant)requestAnimationFrame(()=>{pill.style.transition='';});
+/* ── MOBILE GLASS NAV: pill trượt + KÉO-VUỐT như iOS (liquid) ── */
+function gnItems(){const n=$('glassNav');return n?[].slice.call(n.querySelectorAll('.gn-item')):[];}
+// Đặt pill dưới 1 item (có animation, trừ khi instant/đang kéo)
+function gnPlacePill(item,instant){
+  const nav=$('glassNav'),pill=$('gnPill');if(!nav||!pill||!item)return;
+  const nr=nav.getBoundingClientRect(),ir=item.getBoundingClientRect();
+  if(!ir.width)return;                       // nav đang ẩn (desktop) → bỏ qua
+  if(instant)pill.classList.add('dragging');
+  pill.style.width=ir.width+'px';
+  pill.style.transform='translateX('+(ir.left-nr.left)+'px)';
+  if(instant){void pill.offsetWidth;pill.classList.remove('dragging');}
 }
-document.querySelectorAll('.gn-item').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+// Đồng bộ pill về item đang active (gọi sau showPage / resize / load)
+function gnSync(instant){
+  const items=gnItems();if(!items.length)return;
+  const active=$('glassNav').querySelector('.gn-item.active')||items[0];
+  requestAnimationFrame(()=>gnPlacePill(active,instant));
+}
+// Kéo-thả: pill bám theo ngón tay, item gần nhất sáng lên, thả → snap + chuyển trang
+(function(){
+  const nav=$('glassNav');if(!nav)return;
+  let dragging=false,startX=0,curIdx=-1;
+  function nearestIdx(clientX){
+    const items=gnItems();let best=0,bd=1e9;
+    items.forEach((it,i)=>{const r=it.getBoundingClientRect();const c=r.left+r.width/2;const d=Math.abs(clientX-c);if(d<bd){bd=d;best=i;}});
+    return best;
+  }
+  function highlight(i){gnItems().forEach((it,k)=>it.classList.toggle('active',k===i));}
+  function followPill(clientX){
+    const items=gnItems();if(!items.length)return;
+    const nr=nav.getBoundingClientRect(),pill=$('gnPill');
+    const w=items[0].getBoundingClientRect().width;
+    let x=clientX-nr.left-w/2;
+    const pad=6,maxX=nr.width-pad-w;
+    x=Math.max(pad,Math.min(maxX,x));
+    pill.style.width=w+'px';pill.style.transform='translateX('+x+'px)';
+  }
+  function down(e){
+    dragging=true;startX=e.clientX;
+    $('gnPill').classList.add('dragging');
+    curIdx=nearestIdx(e.clientX);highlight(curIdx);
+    try{nav.setPointerCapture(e.pointerId);}catch(_){}
+  }
+  function move(e){
+    if(!dragging)return;
+    const i=nearestIdx(e.clientX);
+    if(i!==curIdx){curIdx=i;highlight(i);hapticTap();}
+    followPill(e.clientX);                    // pill bám ngón tay → cảm giác "liquid"
+  }
+  function up(e){
+    if(!dragging)return;dragging=false;
+    $('gnPill').classList.remove('dragging');
+    const items=gnItems();const i=nearestIdx((e&&e.clientX!=null)?e.clientX:startX);
+    const page=items[i]&&items[i].dataset.page;
+    gnPlacePill(items[i]);                    // snap mượt về item đích
+    if(page)showPage(page);                   // tap hay vuốt đều chuyển trang ở đây
+  }
+  nav.addEventListener('pointerdown',down);
+  nav.addEventListener('pointermove',move);
+  nav.addEventListener('pointerup',up);
+  nav.addEventListener('pointercancel',()=>{dragging=false;$('gnPill').classList.remove('dragging');gnSync();});
+})();
 window.addEventListener('resize',()=>gnSync(true));
+window.addEventListener('orientationchange',()=>setTimeout(()=>gnSync(true),250));
+setTimeout(()=>gnSync(true),300);            // sau khi nav hiện & font/emoji đo xong
 
 /* ════════ COMPUTED ════════ */
 function totalCourses(){return courses.reduce((s,c)=>s+(+c.amount||0),0);}
