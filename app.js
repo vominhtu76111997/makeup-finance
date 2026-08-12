@@ -496,6 +496,11 @@ function fbAttach(){
 function fbDetach(){if(FB.ref){FB.ref.off();FB.ref=null;}FB._seeded=false;}
 
 function stableStr(o){if(o===null||typeof o!=='object')return JSON.stringify(o);if(Array.isArray(o))return '['+o.map(stableStr).join(',')+']';return '{'+Object.keys(o).sort().map(function(k){return JSON.stringify(k)+':'+stableStr(o[k]);}).join(',')+'}';}
+/* Deep-clone: BẮT BUỘC khi lưu vào FB._lastSynced.
+   Nếu không clone, _lastSynced dùng chung tham chiếu với mảng clients/courses/cosmetics.
+   Khi sửa một mục tại chỗ (saveEdit: c.revenue=…), _lastSynced cũng bị đổi theo,
+   khiến fbDiff() không thấy khác biệt → KHÔNG đẩy sửa đổi lên server → reload bị mất. */
+function fbClone(o){try{return JSON.parse(JSON.stringify(o));}catch(e){return o;}}
 function fbSig(d){
   function coll(obj){return Object.keys(obj||{}).map(k=>stableStr(obj[k])).sort().join('|');}
   const s=typeof d.settings==='string'?d.settings:JSON.stringify(d.settings||{});
@@ -532,7 +537,7 @@ function fbDiff(prev,cur){
 function fbApply(val){
   const serverTree={clients:val.clients||{},courses:val.courses||{},cosmetics:val.cosmetics||{},settings:(typeof val.settings==='string'?val.settings:JSON.stringify(val.settings||{}))};
   const sig=fbSig(serverTree);
-  if(sig===FB._pushSig){FB._lastSynced=serverTree;hideSplash();return;}
+  if(sig===FB._pushSig){FB._lastSynced=fbClone(serverTree);hideSplash();return;}
   FB._applying=true;
   try{
     const last=FB._lastSynced||{};
@@ -548,7 +553,7 @@ function fbApply(val){
       let s={};try{s=val.settings?(typeof val.settings==='string'?JSON.parse(val.settings):val.settings):{};}catch(e){s={};}
       if(Array.isArray(s.services)&&s.services.length){services=s.services;localStorage.setItem('mk_services',JSON.stringify(services));}
     }
-    FB._lastSynced=serverTree;FB._pushSig=sig;
+    FB._lastSynced=fbClone(serverTree);FB._pushSig=sig;
   }catch(e){console.warn('fb apply',e);}
   FB._applying=false;
   try{buildServiceSelects();updateAll();}catch(e){}
@@ -563,7 +568,7 @@ function fbSaveAll(immediate){
   const run=function(){
     if(!FB.ref)return;
     const cur=fbTree();FB._pushSig=fbSig(cur);
-    const prev=FB._lastSynced;FB._lastSynced=cur;
+    const prev=FB._lastSynced;FB._lastSynced=fbClone(cur);
     const onErr=function(e){console.warn('fb save',e);FB._lastSynced=null;};
     if(!prev){FB.ref.set(cur).catch(onErr);return;}
     const up=fbDiff(prev,cur);if(!Object.keys(up).length)return;
